@@ -1,5 +1,6 @@
-import express from 'express';
+import express, { Request, Response } from 'express';
 import bodyParser from 'body-parser';
+import Joi from 'joi';
 import { filterImageFromURL, deleteLocalFiles } from './util/util';
 
 (async () => {
@@ -28,7 +29,32 @@ import { filterImageFromURL, deleteLocalFiles } from './util/util';
 
   /**************************************************************************** */
 
-  //! END @TODO1
+  app.get('/filteredimage', (req: Request, res: Response) => {
+    const { image_url } = req.query;
+    const validationResult = Joi.validate(image_url, Joi.string().uri());
+
+    if (validationResult.error) {
+      console.log(validationResult.error);
+      return res.status(400).send('Did not receive a proper uri as image_url query parameter');
+    }
+
+    filterImageFromURL(image_url)
+      .then(filteredImage => {
+        res.status(200).sendFile(filteredImage, err => {
+          deleteLocalFiles([filteredImage]);
+          if (err) {
+            console.log(`Failed to send image back to client.\n
+                        source path: ${image_url}\n
+                        local path: ${filteredImage}`);
+            res.sendStatus(500);
+          }
+        });
+      })
+      .catch(err => {
+        console.log(err);
+        res.sendStatus(500);
+      });
+  });
 
   // Root Endpoint
   // Displays a simple message to the user

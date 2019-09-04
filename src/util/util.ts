@@ -1,5 +1,6 @@
 import fs from 'fs';
 import Jimp = require('jimp');
+import axios from 'axios';
 
 // filterImageFromURL
 // helper function to download, filter, and save the filtered image locally
@@ -35,4 +36,20 @@ export async function deleteLocalFiles(files: Array<string>) {
   for (const file of files) {
     fs.unlinkSync(file);
   }
+}
+
+export async function putImageToUrl(url: string, imagePath: string) {
+  return new Promise((resolve, reject) => {
+    fs.readFile(imagePath, async (err, data) => {
+      if (err) {
+        return reject(err);
+      }
+      try {
+        await axios.put(url, data);
+      } catch (err) {
+        return reject(err);
+      }
+      return resolve();
+    });
+  });
 }

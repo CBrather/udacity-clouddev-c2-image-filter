@@ -2,6 +2,7 @@ import express, { Request, Response } from 'express';
 import bodyParser from 'body-parser';
 import Joi from 'joi';
 import { filterImageFromURL, deleteLocalFiles, putImageToUrl } from './util/util';
+import { requireAuth } from './middleware/requireAuth';
 
 (async () => {
   // Init the Express application
@@ -29,7 +30,7 @@ import { filterImageFromURL, deleteLocalFiles, putImageToUrl } from './util/util
 
   /**************************************************************************** */
 
-  app.get('/filteredimage', (req: Request, res: Response) => {
+  app.get('/filteredimage', requireAuth, (req: Request, res: Response) => {
     const { image_url, putimage_url }: { image_url: string; putimage_url: string } = req.query;
     const imageUrlValidation = Joi.validate(image_url, Joi.string().uri());
 

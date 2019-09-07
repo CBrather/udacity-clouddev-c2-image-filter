@@ -1,7 +1,8 @@
 import express, { Request, Response } from 'express';
 import bodyParser from 'body-parser';
 import Joi from 'joi';
-import { filterImageFromURL, deleteLocalFiles } from './util/util';
+import { filterImageFromURL, deleteLocalFiles, putImageToUrl } from './util/util';
+import { requireAuth } from './middleware/requireAuth';
 
 (async () => {
   // Init the Express application
@@ -29,17 +30,27 @@ import { filterImageFromURL, deleteLocalFiles } from './util/util';
 
   /**************************************************************************** */
 
-  app.get('/filteredimage', (req: Request, res: Response) => {
-    const { image_url } = req.query;
-    const validationResult = Joi.validate(image_url, Joi.string().uri());
+  app.get('/filteredimage', requireAuth, (req: Request, res: Response) => {
+    const { image_url, putimage_url }: { image_url: string; putimage_url: string } = req.query;
+    const imageUrlValidation = Joi.validate(image_url, Joi.string().uri());
 
-    if (validationResult.error) {
-      console.log(validationResult.error);
+    if (imageUrlValidation.error) {
+      console.log(`Received invalid image_url query:\n${imageUrlValidation.error}`);
       return res.status(400).send('Did not receive a proper uri as image_url query parameter');
     }
 
+    const putImageUrlValidation = Joi.validate(putimage_url, Joi.string().uri());
+
     filterImageFromURL(image_url)
-      .then(filteredImage => {
+      .then(async filteredImage => {
+        // Try to upload the filtered image to putimage_url
+        if (putimage_url && putImageUrlValidation.error) {
+          console.log(`Received invalid putimage_url query, cannot put filtered image`);
+        } else if (putimage_url) {
+          putImageToUrl(putimage_url, filteredImage);
+        }
+
+        // return filtered image to the requester
         res.status(200).sendFile(filteredImage, err => {
           deleteLocalFiles([filteredImage]);
           if (err) {

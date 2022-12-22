@@ -42,7 +42,7 @@
     "express": "^4.17.1",
     "jimp": "^0.6.4",
     "joi": "^14.3.1",
-    "jsonwebtoken": "^8.5.1",
+    "jsonwebtoken": "^9.0.0",
     "save-dev": "^2.0.0"
   }
 }
